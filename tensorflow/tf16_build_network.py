@@ -1,5 +1,6 @@
 import tensorflow as tf
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 def add_layer(inputs, in_size, out_size, activation_function=None):
@@ -29,9 +30,22 @@ train_step = tf.train.AdamOptimizer(0.1).minimize(loss)
 
 init = tf.global_variables_initializer()
 
+figure = plt.figure()
+ax = figure.add_subplot(1, 1, 1)
+ax.scatter(x_data, y_data)
+plt.ion()
+plt.show()
+
 with tf.Session() as sess:
     sess.run(init)
 
     for i in range(100000):
         sess.run(train_step, feed_dict={xs: x_data, ys: y_data})
-        print(sess.run(loss, feed_dict={xs: x_data, ys: y_data}))
+        # print(sess.run(loss, feed_dict={xs: x_data, ys: y_data}))
+        try:
+            ax.lines.remove(lines[0])
+        except Exception:
+            pass
+        prediction_value = sess.run(prediction, feed_dict={xs: x_data})
+        lines = ax.plot(x_data, prediction_value, 'r-', lw=5)
+        plt.pause(0.1)
