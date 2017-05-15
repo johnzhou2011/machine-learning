@@ -118,7 +118,6 @@ class PolicyGradient:
             self.tf_acts: np.array(self.ep_as),  # shape=[None, ]
             self.tf_vt: discounted_ep_rs_norm,  # shape=[None, ]
         })
-
         self.ep_obs, self.ep_as, self.ep_rs = [], [], []  # empty episode data
         return discounted_ep_rs_norm
 

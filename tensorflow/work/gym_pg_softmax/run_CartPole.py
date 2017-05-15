@@ -19,12 +19,12 @@ RL = PolicyGradient(
     n_features=env.observation_space.shape[0],
     learning_rate=0.02,
     reward_decay=0.99,
-    # output_graph=True,
+    output_graph=True,
 )
 
-for i_episode in range(30000):
+#RL.restore('models/car_pole-50')
 
-    RL.restore('models/car_pole-50')
+for i_episode in range(30000):
 
     observation = env.reset()
 
