@@ -1,11 +1,6 @@
 import numpy as np
 import tensorflow as tf
 
-# reproducible
-np.random.seed(1)
-tf.set_random_seed(1)
-
-
 class PolicyGradient:
     def __init__(
             self,
@@ -26,7 +21,7 @@ class PolicyGradient:
 
         self.sess = tf.Session()
 
-        self.saver = tf.train.Saver();
+        self.saver = tf.train.Saver()
 
         if output_graph:
             # $ tensorboard --logdir=logs
@@ -45,25 +40,27 @@ class PolicyGradient:
         layer = tf.layers.dense(
             inputs=self.tf_obs,
             units=self.n_features * 2,
-            activation=tf.nn.tanh,  # tanh activation
+            activation=tf.nn.relu,
             kernel_initializer=tf.random_normal_initializer(mean=0, stddev=0.3),
             bias_initializer=tf.constant_initializer(0.1),
             name='fc1'
         )
         # fc2
-        layer1 = tf.layers.dense(
-            inputs=layer,
-            units=self.n_features * 2,
-            activation=tf.nn.tanh,  # tanh activation
-            kernel_initializer=tf.random_normal_initializer(mean=0, stddev=0.3),
-            bias_initializer=tf.constant_initializer(0.1),
-            name='fc2'
-        )
+        # layer1 = tf.layers.dense(
+        #     inputs=layer,
+        #     units=self.n_features * 2,
+        #     activation=tf.nn.relu,
+        #     kernel_initializer=tf.random_normal_initializer(mean=0, stddev=0.3),
+        #     bias_initializer=tf.constant_initializer(0.1),
+        #     name='fc2'
+        # )
+        layer1 = tf.layers.dropout(layer,rate=0.1)
+
         # fc3
         layer2 = tf.layers.dense(
             inputs=layer1,
             units=self.n_features * 2,
-            activation=tf.nn.tanh,  # tanh activation
+            activation=tf.nn.tanh,
             kernel_initializer=tf.random_normal_initializer(mean=0, stddev=0.3),
             bias_initializer=tf.constant_initializer(0.1),
             name='fc3'
@@ -84,23 +81,21 @@ class PolicyGradient:
             # to maximize total reward (log_p * R) is to minimize -(log_p * R), and the tf only have minimize(loss)
             neg_log_prob = tf.nn.sparse_softmax_cross_entropy_with_logits(logits=all_act,
                                                                           labels=self.tf_acts)  # this is negative log of chosen action
-            # or in this way:
-            # neg_log_prob = tf.reduce_sum(-tf.log(self.all_act_prob)*tf.one_hot(self.tf_acts, self.n_actions), axis=1)
             loss = tf.reduce_mean(neg_log_prob * self.tf_vt)  # reward guided loss
 
         with tf.name_scope('train'):
             self.train_op = tf.train.AdamOptimizer(self.lr).minimize(loss)
 
     def save(self, step):
-        self.saver.save(self.sess, "models/car_pole", global_step=step)
+        self.saver.save(self.sess, "models/sw1", global_step=step)
 
     def restore(self, path):
         self.saver.restore(self.sess, path)
 
     def choose_action(self, observation):
-        prob_weights = self.sess.run(self.all_act_prob, feed_dict={self.tf_obs: observation[np.newaxis, :]})
+        prob_weights = self.sess.run(self.all_act_prob, feed_dict={self.tf_obs: [observation]})
         action = np.random.choice(range(prob_weights.shape[1]),
-                                  p=prob_weights.ravel())  # select action w.r.t the actions prob
+                                  p=prob_weights.ravel())
         return action
 
     def store_transition(self, s, a, r):
@@ -123,7 +118,7 @@ class PolicyGradient:
 
     def _discount_and_norm_rewards(self):
         # discount episode rewards
-        discounted_ep_rs = np.zeros_like(self.ep_rs)
+        discounted_ep_rs = np.zeros_like(self.ep_rs).astype(float)
         running_add = 0
         for t in reversed(range(0, len(self.ep_rs))):
             running_add = running_add * self.gamma + self.ep_rs[t]
@@ -131,5 +126,5 @@ class PolicyGradient:
 
         # normalize episode rewards
         discounted_ep_rs -= np.mean(discounted_ep_rs)
-        discounted_ep_rs /= np.std(discounted_ep_rs)
+        discounted_ep_rs /= np.std(discounted_ep_rs).astype(int)
         return discounted_ep_rs

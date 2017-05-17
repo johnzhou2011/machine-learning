@@ -1,0 +1,6 @@
+model_checkpoint_path: "sw1-34"
+all_model_checkpoint_paths: "sw1-30"
+all_model_checkpoint_paths: "sw1-31"
+all_model_checkpoint_paths: "sw1-32"
+all_model_checkpoint_paths: "sw1-33"
+all_model_checkpoint_paths: "sw1-34"
