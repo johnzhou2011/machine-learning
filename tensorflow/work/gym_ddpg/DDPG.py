@@ -1,24 +1,25 @@
 import tensorflow as tf
 import numpy as np
 import gym
+import gym_sw1
 
 #####################  hyper parameters  ####################
 
-MAX_EPISODES = 70
+MAX_EPISODES = 30000
 MAX_EP_STEPS = 400
 LR_A = 0.01  # learning rate for actor
-LR_C = 0.01  # learning rate for critic
+LR_C = 0.01  # learning rate for criti c
 GAMMA = 0.9  # reward discount
 TAU = 0.01  # Soft update for target param, but this is computationally expansive
 # so we use replace_iter instead
 REPLACE_ITER_A = 500
 REPLACE_ITER_C = 300
-MEMORY_CAPACITY = 7000
+MEMORY_CAPACITY = 500
 BATCH_SIZE = 32
 
 RENDER = False
 OUTPUT_GRAPH = True
-ENV_NAME = 'CartPole-v0'
+ENV_NAME = 'SW1-NORMAL-ATTACK-v0'
 
 
 ###############################  Actor  ####################################
@@ -73,10 +74,9 @@ class Actor(object):
         self.t_replace_counter += 1
 
     def choose_action(self, observation):
-        prob_weights = self.sess.run(self.all_act_prob, feed_dict={self.tf_obs: [observation]})
-        action = np.random.choice(range(prob_weights.shape[1]),
-                                  p=prob_weights.ravel())
-        return action
+        prob_weights = self.sess.run(self.a, feed_dict={S: [observation]})
+
+        return prob_weights
 
     def add_grad_to_graph(self, a_grads):
         with tf.variable_scope('policy_grads'):
@@ -176,8 +176,7 @@ class Memory(object):
 
 
 env = gym.make(ENV_NAME)
-env = env.unwrapped
-env.seed(1)
+env.env.init_params('10.20.64.116', 5000)
 
 state_dim = env.observation_space.shape[0]
 action_dim = env.action_space.n
@@ -209,25 +208,20 @@ saver = tf.train.Saver()
 if OUTPUT_GRAPH:
     tf.summary.FileWriter("logs/", sess.graph)
 
-var = 3  # control exploration
-
 for i in range(MAX_EPISODES):
     s = env.reset()
     ep_reward = 0
 
-    for j in range(MAX_EP_STEPS):
-
+    while True:
         env.render()
 
         # Added exploration noise
         a = actor.choose_action(s)
-        a = np.clip(np.random.normal(a, var), -2, 2)  # add randomness to action selection for exploration
-        s_, r, done, info = env.step(a)
-
-        M.store_transition(s, a, r / 10, s_)
+        s_, r, done, info = env.step(np.random.choice(range(a.shape[1]),
+                                                      p=a.ravel()))
+        M.store_transition(s, a[0], r / 10, s_)
 
         if M.pointer > MEMORY_CAPACITY:
-            var *= .9995  # decay the action randomness
             b_M = M.sample(BATCH_SIZE)
             b_s = b_M[:, :state_dim]
             b_a = b_M[:, state_dim: state_dim + action_dim]
@@ -239,3 +233,6 @@ for i in range(MAX_EPISODES):
 
         s = s_
         ep_reward += r
+        if done:
+            print('ep:', i, 'reward:', ep_reward)
+            break

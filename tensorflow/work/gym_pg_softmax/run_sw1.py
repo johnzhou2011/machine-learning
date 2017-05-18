@@ -4,7 +4,7 @@ from RL_brain import PolicyGradient
 
 env = gym.make('SW1-NORMAL-ATTACK-v0')
 # env.env.init_params('10.20.64.162',5000
-env.env.init_params('10.20.72.87', 5000)
+env.env.init_params('10.20.64.116', 5000)
 
 print(env.action_space)
 print(env.observation_space)
@@ -14,7 +14,7 @@ print(env.observation_space.low)
 RL = PolicyGradient(
     n_actions=env.action_space.n,
     n_features=env.observation_space.shape[0],
-    learning_rate=0.02,
+    learning_rate=0.01,
     reward_decay=0.99,
     output_graph=True,
 )
