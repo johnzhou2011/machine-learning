@@ -19,7 +19,7 @@ BATCH_SIZE = 32
 
 RENDER = False
 OUTPUT_GRAPH = True
-ENV_NAME = 'SW1-NORMAL-ATTACK-v0'
+ENV_NAME = 'CartPole-v0'
 
 
 ###############################  Actor  ####################################
@@ -176,7 +176,6 @@ class Memory(object):
 
 
 env = gym.make(ENV_NAME)
-env.env.init_params('10.20.64.116', 5000)
 
 state_dim = env.observation_space.shape[0]
 action_dim = env.action_space.n

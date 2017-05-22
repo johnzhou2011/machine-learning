@@ -1,5 +1,6 @@
 import gym
 import gym_sw1
+import numpy as np
 from RL_brain import PolicyGradient
 
 env = gym.make('SW1-NORMAL-ATTACK-v0')
@@ -14,7 +15,7 @@ print(env.observation_space.low)
 RL = PolicyGradient(
     n_actions=env.action_space.n,
     n_features=env.observation_space.shape[0],
-    learning_rate=0.01,
+    learning_rate=0.02,
     reward_decay=0.99,
     output_graph=True,
 )
@@ -36,16 +37,12 @@ for i_episode in range(30000):
 
         observation_, reward, done, info = env.step(action)
 
+        print(observation_)
         RL.store_transition(observation, action, reward)
 
         if done:
             ep_rs_sum = sum(RL.ep_rs)
-
-            if 'running_reward' not in globals():
-                running_reward = ep_rs_sum
-            else:
-                running_reward = running_reward * 0.99 + ep_rs_sum * 0.01
-
+            print("episode:", i_episode, "  reward:", int(ep_rs_sum))
             vt = RL.learn()
             break
         observation = observation_
